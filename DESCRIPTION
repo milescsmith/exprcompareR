@@ -1,0 +1,19 @@
+Package: geoocompare.R
+Type: Package
+Title: Performs correlation analysis of Seurat data and a Gene Expression Omnibus entry
+Version: 1.0.0
+Authors@R: person("Miles", "Smith", email = "miles-smith@omrf.org", role = c("aut", "cre"))
+Maintainer: Miles Smith <miles-smith@omrf.org>
+Description: Performs a canonical correlation analysis on the average expression of 
+    Seurat clusters and a GEO entry.
+Depends: R (>= 3.5.1),
+    GEOquery,
+    dplyr,
+    Seurat,
+    plyr,
+    irlba,
+    heatmaply
+License: BSD-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1
