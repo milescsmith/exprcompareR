@@ -43,6 +43,8 @@ GEOcompare <- function(seuratObj,
     }
   }
 
+  rownames(seurat.avg) <- toupper(rownames(seurat.avg))
+
   ref.mat <- GEOprep(GEOaccession = GEOaccession,
                      var.list = rownames(seurat.avg),
                      index = GEOentry.index,
@@ -147,9 +149,11 @@ GEOprep <- function(GEOaccession,
   exprs.mat <- exprs.mat %>% as.data.frame() %>% rownames_to_column(var = "probe_id")
   translate <- data.frame('probe_id' = ref[[index]]@featureData@data$ID,
                           'gene_name' = ref[[index]]@featureData@data$`Gene Symbol`)
+  # use toupper() as a quick hack that will let us compare human and mouse genes.
+  # sure, going through homologene or the like would be better, but that takes work.
   exprs.mat$gene_name <- mapvalues(x = exprs.mat$probe_id,
                                    from = translate$probe_id,
-                                   to = as.character(translate$gene_name))
+                                   to = toupper(as.character(translate$gene_name)))
 
   # Speeds things up and prevents certain errors.  No sense in keeping any data we are not going to use downstream.
   if (!is.null(var.list)){
