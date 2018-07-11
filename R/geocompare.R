@@ -15,7 +15,7 @@
 #' @param method.use = 'pearson' 
 #'
 #' @importFrom GEOquery getGEO
-#' @importFrom dplyr as.data.frame rownames_to_column
+#' @importFrom dplyr rownames_to_column
 #' @importFrom Seurat AverageExpression SetAllIdent
 #' @importFrom plyr mapvalues ddply numcolwise
 #' @importFrom irlba irlba
