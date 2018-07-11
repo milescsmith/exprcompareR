@@ -1,4 +1,4 @@
-Package: geoocompare.R
+Package: geocompareR
 Type: Package
 Title: Performs correlation analysis of Seurat data and a Gene Expression Omnibus entry
 Version: 1.0.0
