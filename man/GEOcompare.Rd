@@ -4,23 +4,29 @@
 \alias{GEOcompare}
 \title{GEOcompare}
 \usage{
-GEOcompare(seuratObj, GEOaccession, do.plot = FALSE, group.by = NULL,
-  add.ident = NULL, function.use = cor)
+GEOcompare(seuratObj, GEOaccession, GEOentry.index = 1,
+  rename.samples = TRUE, do.plot = FALSE, group.by = NULL,
+  add.ident = NULL, cor.function.use = cor, ...)
 }
 \arguments{
-\item{seuratObj}{}
+\item{seuratObj}{Either a processed Seurat object (with ScaleData run) or the output from AverageExpression.
+If a Seurat object is passed, AverageExpression will be run.}
 
 \item{GEOaccession}{A GEO accession number (i.e. 'GSE24759')}
 
-\item{do.plot}{Plot the correlation matrix}
+\item{GEOentry.index}{Indicate which ExpressionSet to use in a GEO entry containing multiple ExpressionSets}
+
+\item{rename.samples}{Replace the GEO sample name with the title provided in the ExpressionSet's phenoData@data slot}
+
+\item{do.plot}{Plot the correlation matrix. (default: FALSE)}
 
 \item{group.by}{Identifier or meta.data column by which to group the data. (default: 'ident')}
 
-\item{add.ident}{An additional identifier to use as a grouping variable.}
+\item{add.ident}{An additional identifier to use as a grouping variable. (default: NULL)}
 
-\item{cor.function.use}{= cor}
+\item{cor.function.use}{Function to use to calculate correlation. (default: stats::cor)}
 
-\item{method.use}{= 'pearson'}
+\item{...}{Additional parameters to pass to the correlation function.}
 }
 \value{
 A matrix of correlation values
