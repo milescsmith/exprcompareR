@@ -18,8 +18,10 @@
 #' @param cor.function.use Function to use to calculate correlation. (default: stats::cor)
 #' @param ... Additional parameters to pass to the correlation function.
 #'
+#' @import stringr
 #' @importFrom Seurat AverageExpression SetAllIdent
-#' @importFrom stringr str_sub
+#' @importFrom heatmaply heatmaply
+#' @importFrom stats cor
 #'
 #' @return A matrix of correlation values
 #' @export
@@ -47,12 +49,12 @@ ExprRefCompare <- function(seuratObj,
 
   rownames(seurat.avg) <- toupper(rownames(seurat.avg))
 
-  if (str_sub(ref.mat, 1, 1) == "G"){
+  if (str_sub(accession, 1, 1) == "G"){
     ref.mat <- GEOprep(GEOaccession = accession,
                        var.list = rownames(seurat.avg),
                        index = GEOentry.index,
                        rename.samples = rename.samples)
-  } else if (str_sub(ref.mat, 1, 1) == "E"){
+  } else if (str_sub(accession, 1, 1) == "E"){
     ref.mat <- ArrayExpressionPrep(AEaccession = accession,
                                    var.list = rownames(seurat.avg),
                                    rename.samples = rename.samples)
@@ -60,10 +62,12 @@ ExprRefCompare <- function(seuratObj,
 
   cor.result <- CCAcompare(ref.mat = ref.mat,
                            expr.mat = seurat.avg,
-                           do.plot = do.plot,
                            cor.function.use = cor.function.use)
-
-  return(cor.result)
+  if (do.plot){
+    return(heatmaply(cor.result))
+  } else {
+    return(cor.result)
+  }
 }
 
 
@@ -84,7 +88,8 @@ ExprRefCompare <- function(seuratObj,
 #' @importFrom tibble rownames_to_column column_to_rownames
 #' @importFrom plyr mapvalues ddply numcolwise
 #' @importFrom irlba irlba
-#' @importFrom heatmaply heatmaply
+#' @importFrom stats cor na.omit
+
 #'
 #' @return A matrix of correlation values
 #' @export
@@ -121,13 +126,7 @@ CCAcompare <- function(ref.mat,
   expr.cca <- cca.data[dim(ref.mat)[[2]]+1:dim(expr.mat)[[2]], ]
   cor.mat <- cor.function.use(t(ref.cca), t(expr.cca), ...)
 
-  if(isTRUE(do.plot)){
-    hm <- heatmaply(cor.mat)
-    hm
-  }
-
   return(cor.mat)
-  #return(cca.data)
 }
 
 
@@ -144,6 +143,8 @@ CCAcompare <- function(ref.mat,
 #' provided in the ExpressionSet's phenoData@data slot. (default: TRUE)
 #'
 #' @importFrom GEOquery getGEO
+#' @importFrom Biobase exprs
+#' @importFrom magrittr '%>%'
 #' @importFrom tibble rownames_to_column column_to_rownames
 #' @importFrom plyr mapvalues ddply numcolwise
 #'
@@ -195,14 +196,17 @@ GEOprep <- function(GEOaccession,
 #' @param rename.samples Replace the GEO sample name with the title
 #' provided in the ExpressionSet's phenoData@data$characteristics.celltype. slot. (default: TRUE)
 #'
+#' @import dplyr
+#' @import AnnotationDbi
+#' @import stringr
+#' @importFrom rlang quo
 #' @importFrom ArrayExpress ArrayExpress
+#' @importFrom Biobase exprs
+#' @importFrom magrittr '%>%'
 #' @importFrom tibble rownames_to_column column_to_rownames
 #' @importFrom plyr mapvalues ddply numcolwise
 #' @importFrom BiocInstaller biocLite
 #' @importFrom oligo rma
-#' @importFrom AnnotationDbi select, keys
-#' @importFrom stringr str_replace, str_replace_all, str_c
-#' @importFrom dplyr filter
 #'
 #' @return A matrix of correlation values
 #' @export
@@ -214,7 +218,7 @@ ArrayExpressionPrep <- function(AEaccession,
 
   ae <- ArrayExpress(AEaccession)
   names(ae@phenoData@data) <- tolower(names(ae@phenoData@data))
-  ae <- rma(ae)
+  ae <- oligo::rma(ae)
 
   exprs.mat <- exprs(ae)
   exprs.mat <- exprs.mat %>% as.data.frame() %>% rownames_to_column(var = "probe_id")
@@ -238,7 +242,7 @@ ArrayExpressionPrep <- function(AEaccession,
     }
   }
 
-  translate <- select(platform, keys = keys(platform, keytype="PROBEID"), columns="SYMBOL", keytype="PROBEID")
+  translate <- AnnotationDbi::select(platform, keys = keys(platform, keytype="PROBEID"), columns="SYMBOL", keytype="PROBEID")
   exprs.mat$gene_name <- mapvalues(x = exprs.mat$probe_id,
                                    from = translate$PROBEID,
                                    to = toupper(as.character(translate$SYMBOL)))
