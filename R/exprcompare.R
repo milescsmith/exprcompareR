@@ -1,16 +1,17 @@
-#' GEOcompare
+#' ExprRefCompare
 #'
 #' Compares the averaged expression of each cluster within a Seurat object
-#' to that of an entry in the Gene Expression Omnibus database.
+#' to that of an entry in the Gene Expression Omnibus database or the
+#' ArrayExpress Archive of Functional Genomics Data
 #'
 #' Performs a canonical correlation analysis on the two datasets and then
 #' assesses the correlation using the CCA data.
 #'
 #' @param seuratObj Either a processed Seurat object (with ScaleData run) or the output from AverageExpression.
 #' If a Seurat object is passed, AverageExpression will be run.
-#' @param GEOaccession A GEO accession number (i.e. 'GSE24759')
+#' @param accession A GEO or ArrayExpress accession number (i.e. 'GSE24759')
 #' @param GEOentry.index Indicate which ExpressionSet to use in a GEO entry containing multiple ExpressionSets
-#' @param rename.samples Replace the GEO sample name with the title provided in the ExpressionSet's phenoData@data slot
+#' @param rename.samples Replace the sample name with that provided in the ExpressionSet's phenoData@data slot
 #' @param do.plot Plot the correlation matrix. (default: FALSE)
 #' @param group.by Identifier or meta.data column by which to group the data. (default: 'ident')
 #' @param add.ident An additional identifier to use as a grouping variable. (default: NULL)
@@ -18,20 +19,21 @@
 #' @param ... Additional parameters to pass to the correlation function.
 #'
 #' @importFrom Seurat AverageExpression SetAllIdent
+#' @importFrom stringr str_sub
 #'
 #' @return A matrix of correlation values
 #' @export
 #'
 #' @examples
-GEOcompare <- function(seuratObj,
-                       GEOaccession,
-                       GEOentry.index = 1,
-                       rename.samples = TRUE,
-                       do.plot = FALSE,
-                       group.by = NULL,
-                       add.ident = NULL,
-                       cor.function.use = cor,
-                       ...){
+ExprRefCompare <- function(seuratObj,
+                           accession,
+                           GEOentry.index = 1,
+                           rename.samples = TRUE,
+                           do.plot = FALSE,
+                           group.by = NULL,
+                           add.ident = NULL,
+                           cor.function.use = cor,
+                           ...){
   if(class(seuratObj) == 'seurat'){
     if(!is.null(group.by)){
       seuratObj <- SetAllIdent(seuratObj, group.by)
@@ -45,10 +47,16 @@ GEOcompare <- function(seuratObj,
 
   rownames(seurat.avg) <- toupper(rownames(seurat.avg))
 
-  ref.mat <- GEOprep(GEOaccession = GEOaccession,
-                     var.list = rownames(seurat.avg),
-                     index = GEOentry.index,
-                     rename.samples = rename.samples)
+  if (str_sub(ref.mat, 1, 1) == "G"){
+    ref.mat <- GEOprep(GEOaccession = accession,
+                       var.list = rownames(seurat.avg),
+                       index = GEOentry.index,
+                       rename.samples = rename.samples)
+  } else if (str_sub(ref.mat, 1, 1) == "E"){
+    ref.mat <- ArrayExpressionPrep(AEaccession = accession,
+                                   var.list = rownames(seurat.avg),
+                                   rename.samples = rename.samples)
+  }
 
   cor.result <- CCAcompare(ref.mat = ref.mat,
                            expr.mat = seurat.avg,
@@ -57,6 +65,7 @@ GEOcompare <- function(seuratObj,
 
   return(cor.result)
 }
+
 
 #' CCAcompare
 #'
@@ -89,6 +98,8 @@ CCAcompare <- function(ref.mat,
 
   # All subsequent steps rely on an overlapping number of variables, so find the genes in both datasets and then
   # subset the matrices
+  ref.mat <- na.omit(ref.mat)
+  expr.mat <- na.omit(expr.mat)
   common.variables <- intersect(rownames(ref.mat), rownames(expr.mat))
   ref.mat <- ref.mat[common.variables,]
   expr.mat <- expr.mat[common.variables,]
@@ -116,7 +127,9 @@ CCAcompare <- function(ref.mat,
   }
 
   return(cor.mat)
+  #return(cca.data)
 }
+
 
 #' GEOprep
 #'
@@ -164,6 +177,85 @@ GEOprep <- function(GEOaccession,
 
   if(isTRUE(rename.samples)){
     colnames(exprs.mat) <- ref[[index]]@phenoData@data$title
+  }
+
+  # TODO need a function that can merge sample replicates.
+
+  return(exprs.mat)
+}
+
+
+#' ArrayExpressionPrep
+#'
+#' Processes an entry in the Gene Expression Omnibus database for use in GEOcompare
+#'
+#' @param AEaccession An ArrayExpress accession number (i.e. 'E-MEXP-2360')
+#' @param var.list List of variables (i.e. genes) to include.
+#' If provided, data for other variables is discarded. (default: NULL)
+#' @param rename.samples Replace the GEO sample name with the title
+#' provided in the ExpressionSet's phenoData@data$characteristics.celltype. slot. (default: TRUE)
+#'
+#' @importFrom ArrayExpress ArrayExpress
+#' @importFrom tibble rownames_to_column column_to_rownames
+#' @importFrom plyr mapvalues ddply numcolwise
+#' @importFrom BiocInstaller biocLite
+#' @importFrom oligo rma
+#' @importFrom AnnotationDbi select, keys
+#' @importFrom stringr str_replace, str_replace_all, str_c
+#' @importFrom dplyr filter
+#'
+#' @return A matrix of correlation values
+#' @export
+#'
+#' @examples
+ArrayExpressionPrep <- function(AEaccession,
+                                var.list = NULL,
+                                rename.samples= TRUE){
+
+  ae <- ArrayExpress(AEaccession)
+  names(ae@phenoData@data) <- tolower(names(ae@phenoData@data))
+  ae <- rma(ae)
+
+  exprs.mat <- exprs(ae)
+  exprs.mat <- exprs.mat %>% as.data.frame() %>% rownames_to_column(var = "probe_id")
+
+  platform <- ae@annotation %>%
+    str_replace(pattern = "pd\\.", replacement = "") %>%
+    str_replace_all(pattern = "\\.", replacement = "") %>%
+    str_c(".db") %>%
+    get()
+
+  if (!require(platform)){
+    should.install <- readline(prompt = paste0("The package ", quo(platform), " is needed but is not installed.  Would you like to attempt to install it?"))
+    if (should.install){
+      biocLite(platform)
+      did.load <- require(platform)
+      if (!did.load){
+        stop("Sorry, installation failed.  This analysis cannot proceed.")
+      }
+    } else {
+      stop("This analysis requires that package to translate probeIds to gene names.  It will not work without it.")
+    }
+  }
+
+  translate <- select(platform, keys = keys(platform, keytype="PROBEID"), columns="SYMBOL", keytype="PROBEID")
+  exprs.mat$gene_name <- mapvalues(x = exprs.mat$probe_id,
+                                   from = translate$PROBEID,
+                                   to = toupper(as.character(translate$SYMBOL)))
+  exprs.mat <- exprs.mat %>% filter(!is.na(gene_name))
+
+  # Speeds things up and prevents certain errors.  No sense in keeping any data we are not going to use downstream.
+  if (!is.null(var.list)){
+    exprs.mat <- exprs.mat %>% filter(gene_name %in% var.list)
+  }
+
+  exprs.mat <- ddply(.data = exprs.mat, .variables = "gene_name", .fun = numcolwise(sum)) %>% column_to_rownames(var = 'gene_name')
+
+  if(isTRUE(rename.samples)){
+    names(ae@phenoData@data) <- names(ae@phenoData@data) %>%
+      tolower() %>%
+      str_replace_all(pattern = "cell\\.type", replacement = "celltype")
+    colnames(exprs.mat) <- ae@phenoData@data$characteristics.celltype.
   }
 
   # TODO need a function that can merge sample replicates.
