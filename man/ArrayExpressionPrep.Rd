@@ -4,7 +4,8 @@
 \alias{ArrayExpressionPrep}
 \title{ArrayExpressionPrep}
 \usage{
-ArrayExpressionPrep(AEaccession, var.list = NULL, rename.samples = TRUE)
+ArrayExpressionPrep(AEaccession, var.list = NULL, rename.samples = TRUE,
+  platform = NULL)
 }
 \arguments{
 \item{AEaccession}{An ArrayExpress accession number (i.e. 'E-MEXP-2360')}
@@ -12,7 +13,10 @@ ArrayExpressionPrep(AEaccession, var.list = NULL, rename.samples = TRUE)
 \item{var.list}{List of variables (i.e. genes) to include.
 If provided, data for other variables is discarded. (default: NULL)}
 
-\item{rename.samples}{Replace the GEO sample name with the title
+\item{rename.samples}{Replace the GEO sample name with the title}
+
+\item{platform}{The Annotation Database corresponding to the platform used in the assay (i.e. hgu133plus2.db).
+If not supplied, will attempt to detect the correct database. (default: NULL)
 provided in the ExpressionSet's phenoData@data$characteristics.celltype. slot. (default: TRUE)}
 }
 \value{

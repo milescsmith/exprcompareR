@@ -27,6 +27,9 @@ If a Seurat object is passed, AverageExpression will be run.}
 \item{cor.function.use}{Function to use to calculate correlation. (default: stats::cor)}
 
 \item{...}{Additional parameters to pass to the correlation function.}
+
+\item{platform}{For ArrayExpress datasets, the Annotation Database corresponding to the platform used in the
+assay (i.e. hgu133plus2.db).  If not supplied, will attempt to detect the correct database. (default: NULL)}
 }
 \value{
 A matrix of correlation values

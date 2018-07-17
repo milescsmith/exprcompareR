@@ -16,6 +16,8 @@
 #' @param group.by Identifier or meta.data column by which to group the data. (default: 'ident')
 #' @param add.ident An additional identifier to use as a grouping variable. (default: NULL)
 #' @param cor.function.use Function to use to calculate correlation. (default: stats::cor)
+#' @param platform For ArrayExpress datasets, the Annotation Database corresponding to the platform used in the
+#' assay (i.e. hgu133plus2.db).  If not supplied, will attempt to detect the correct database. (default: NULL)
 #' @param ... Additional parameters to pass to the correlation function.
 #'
 #' @import stringr
@@ -57,7 +59,8 @@ ExprRefCompare <- function(seuratObj,
   } else if (str_sub(accession, 1, 1) == "E"){
     ref.mat <- ArrayExpressionPrep(AEaccession = accession,
                                    var.list = rownames(seurat.avg),
-                                   rename.samples = rename.samples)
+                                   rename.samples = rename.samples,
+                                   platform = platform)
   }
 
   cor.result <- CCAcompare(ref.mat = ref.mat,
@@ -194,6 +197,8 @@ GEOprep <- function(GEOaccession,
 #' @param var.list List of variables (i.e. genes) to include.
 #' If provided, data for other variables is discarded. (default: NULL)
 #' @param rename.samples Replace the GEO sample name with the title
+#' @param platform The Annotation Database corresponding to the platform used in the assay (i.e. hgu133plus2.db).
+#' If not supplied, will attempt to detect the correct database. (default: NULL)
 #' provided in the ExpressionSet's phenoData@data$characteristics.celltype. slot. (default: TRUE)
 #'
 #' @import dplyr
@@ -213,7 +218,8 @@ GEOprep <- function(GEOaccession,
 #' @examples
 ArrayExpressionPrep <- function(AEaccession,
                                 var.list = NULL,
-                                rename.samples= TRUE){
+                                rename.samples= TRUE,
+                                platform = NULL){
 
   ae <- ArrayExpress(AEaccession)
   names(ae@phenoData@data) <- tolower(names(ae@phenoData@data))
@@ -227,19 +233,22 @@ ArrayExpressionPrep <- function(AEaccession,
     str_replace_all(pattern = "\\.", replacement = "") %>%
     str_c(".db")
 
-  if (!require(platform)){
-    should.install <- readline(prompt = paste0("The package ", platform, " is needed but is not installed.  Would you like to attempt to install it?"))
-    if (should.install){
-      biocLite(platform)
-      did.load <- require(platform)
-      if (!did.load){
-        stop("Sorry, installation failed.  This analysis cannot proceed.")
+  if (is.null(platform)){
+    if (!require(platform, character.only = TRUE)){
+      should.install <- readline(prompt = paste0("The package ", platform, " is needed but is not installed.  Would you like to attempt to install it?"))
+      if (should.install){
+        biocLite(platform, suppressUpdates = TRUE, character.only=TRUE)
+        did.load <- require(platform, character.only = TRUE)
+        if (!did.load){
+          stop("Sorry, installation failed.  This analysis cannot proceed.")
+        }
+      } else {
+        stop("The analysis requires that package to translate probeIds to gene names.  It will not work without it.")
       }
-    } else {
-      stop("The analysis requires that package to translate probeIds to gene names.  It will not work without it.")
     }
   }
-  
+
+
   translate <- AnnotationDbi::select(get(platform), keys = keys(get(platform), keytype="PROBEID"), columns="SYMBOL", keytype="PROBEID")
   exprs.mat$gene_name <- mapvalues(x = exprs.mat$probe_id,
                                    from = translate$PROBEID,
