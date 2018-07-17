@@ -199,7 +199,6 @@ GEOprep <- function(GEOaccession,
 #' @import dplyr
 #' @import AnnotationDbi
 #' @import stringr
-#' @importFrom rlang quo
 #' @importFrom ArrayExpress ArrayExpress
 #' @importFrom Biobase exprs
 #' @importFrom magrittr '%>%'
@@ -226,11 +225,10 @@ ArrayExpressionPrep <- function(AEaccession,
   platform <- ae@annotation %>%
     str_replace(pattern = "pd\\.", replacement = "") %>%
     str_replace_all(pattern = "\\.", replacement = "") %>%
-    str_c(".db") %>%
-    get()
+    str_c(".db")
 
   if (!require(platform)){
-    should.install <- readline(prompt = paste0("The package ", quo(platform), " is needed but is not installed.  Would you like to attempt to install it?"))
+    should.install <- readline(prompt = paste0("The package ", platform, " is needed but is not installed.  Would you like to attempt to install it?"))
     if (should.install){
       biocLite(platform)
       did.load <- require(platform)
@@ -238,11 +236,11 @@ ArrayExpressionPrep <- function(AEaccession,
         stop("Sorry, installation failed.  This analysis cannot proceed.")
       }
     } else {
-      stop("This analysis requires that package to translate probeIds to gene names.  It will not work without it.")
+      stop("The analysis requires that package to translate probeIds to gene names.  It will not work without it.")
     }
   }
-
-  translate <- AnnotationDbi::select(platform, keys = keys(platform, keytype="PROBEID"), columns="SYMBOL", keytype="PROBEID")
+  
+  translate <- AnnotationDbi::select(get(platform), keys = keys(get(platform), keytype="PROBEID"), columns="SYMBOL", keytype="PROBEID")
   exprs.mat$gene_name <- mapvalues(x = exprs.mat$probe_id,
                                    from = translate$PROBEID,
                                    to = toupper(as.character(translate$SYMBOL)))
