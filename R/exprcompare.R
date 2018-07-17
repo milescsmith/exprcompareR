@@ -228,27 +228,26 @@ ArrayExpressionPrep <- function(AEaccession,
   exprs.mat <- exprs(ae)
   exprs.mat <- exprs.mat %>% as.data.frame() %>% rownames_to_column(var = "probe_id")
 
-  platform <- ae@annotation %>%
-    str_replace(pattern = "pd\\.", replacement = "") %>%
-    str_replace_all(pattern = "\\.", replacement = "") %>%
-    str_c(".db")
-
   if (is.null(platform)){
-    if (!require(platform, character.only = TRUE)){
-      should.install <- readline(prompt = paste0("The package ", platform, " is needed but is not installed.  Would you like to attempt to install it?"))
-      if (should.install){
-        biocLite(platform, suppressUpdates = TRUE, character.only=TRUE)
-        did.load <- require(platform, character.only = TRUE)
-        if (!did.load){
-          stop("Sorry, installation failed.  This analysis cannot proceed.")
-        }
-      } else {
-        stop("The analysis requires that package to translate probeIds to gene names.  It will not work without it.")
-      }
-    }
+    platform <- ae@annotation %>%
+      str_replace(pattern = "pd\\.", replacement = "") %>%
+      str_replace_all(pattern = "\\.", replacement = "") %>%
+      str_c(".db")
   }
 
-
+  if (!require(platform, character.only = TRUE)){
+    should.install <- readline(prompt = paste0("The package ", platform, " is needed but is not installed.  Would you like to attempt to install it?"))
+    if (should.install){
+      biocLite(platform, suppressUpdates = TRUE, character.only=TRUE)
+      did.load <- require(platform, character.only = TRUE)
+      if (!did.load){
+        stop("Sorry, installation failed.  This analysis cannot proceed.")
+      }
+    } else {
+      stop("The analysis requires that package to translate probeIds to gene names.  It will not work without it.")
+    }
+  }
+  
   translate <- AnnotationDbi::select(get(platform), keys = keys(get(platform), keytype="PROBEID"), columns="SYMBOL", keytype="PROBEID")
   exprs.mat$gene_name <- mapvalues(x = exprs.mat$probe_id,
                                    from = translate$PROBEID,
