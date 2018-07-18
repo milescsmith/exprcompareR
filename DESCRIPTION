@@ -11,7 +11,6 @@ Depends: R (>= 3.5.1),
     ArrayExpress,
     AnnotationDbi,
     tibble,
-    BiocInstaller,
     oligo,
     stringr,
     dplyr,
@@ -22,7 +21,7 @@ Depends: R (>= 3.5.1),
     Biobase,
     magrittr,
     stats,
-    rlang
+    biomaRt
 License: BSD_3_clause
 Encoding: UTF-8
 LazyData: true

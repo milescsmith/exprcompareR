@@ -17,7 +17,8 @@
 #' @param add.ident An additional identifier to use as a grouping variable. (default: NULL)
 #' @param cor.function.use Function to use to calculate correlation. (default: stats::cor)
 #' @param platform For ArrayExpress datasets, the Annotation Database corresponding to the platform used in the
-#' assay (i.e. hgu133plus2.db).  If not supplied, will attempt to detect the correct database. (default: NULL)
+#' assay (i.e. hgu133plus2.db).  If not supplied, will attempt to detect the correct database and retrieve the
+#' names from Biomart (which can be SLOW)(default: NULL)
 #' @param ... Additional parameters to pass to the correlation function.
 #'
 #' @import stringr
@@ -37,6 +38,7 @@ ExprRefCompare <- function(seuratObj,
                            group.by = NULL,
                            add.ident = NULL,
                            cor.function.use = cor,
+                           platform = NULL,
                            ...){
   if(class(seuratObj) == 'seurat'){
     if(!is.null(group.by)){
@@ -57,7 +59,7 @@ ExprRefCompare <- function(seuratObj,
                        index = GEOentry.index,
                        rename.samples = rename.samples)
   } else if (str_sub(accession, 1, 1) == "E"){
-    ref.mat <- ArrayExpressionPrep(AEaccession = accession,
+    ref.mat <- ArrayExpressPrep(AEaccession = accession,
                                    var.list = rownames(seurat.avg),
                                    rename.samples = rename.samples,
                                    platform = platform)
@@ -147,7 +149,7 @@ CCAcompare <- function(ref.mat,
 #'
 #' @importFrom GEOquery getGEO
 #' @importFrom Biobase exprs
-#' @importFrom magrittr '%>%'
+#' @importFrom magrittr '%>%' '%<>%'
 #' @importFrom tibble rownames_to_column column_to_rownames
 #' @importFrom plyr mapvalues ddply numcolwise
 #'
@@ -163,7 +165,7 @@ GEOprep <- function(GEOaccession,
   # access data from a GEO entry
   ref <- getGEO(GEOaccession)
   exprs.mat <- exprs(ref[[index]])
-  exprs.mat <- exprs.mat %>% as.data.frame() %>% rownames_to_column(var = "probe_id")
+  exprs.mat %<>% as.data.frame() %>% rownames_to_column(var = "probe_id")
   translate <- data.frame('probe_id' = ref[[index]]@featureData@data$ID,
                           'gene_name' = ref[[index]]@featureData@data$`Gene Symbol`)
   # use toupper() as a quick hack that will let us compare human and mouse genes.
@@ -174,7 +176,7 @@ GEOprep <- function(GEOaccession,
 
   # Speeds things up and prevents certain errors.  No sense in keeping any data we are not going to use downstream.
   if (!is.null(var.list)){
-    exprs.mat <- exprs.mat %>% filter(gene_name %in% var.list)
+    exprs.mat %<>% filter(gene_name %in% var.list)
   }
 
   exprs.mat <- ddply(.data = exprs.mat, .variables = "gene_name", .fun = numcolwise(sum)) %>% column_to_rownames(var = 'gene_name')
@@ -189,7 +191,7 @@ GEOprep <- function(GEOaccession,
 }
 
 
-#' ArrayExpressionPrep
+#' ArrayExpressnPrep
 #'
 #' Processes an entry in the Gene Expression Omnibus database for use in GEOcompare
 #'
@@ -198,25 +200,25 @@ GEOprep <- function(GEOaccession,
 #' If provided, data for other variables is discarded. (default: NULL)
 #' @param rename.samples Replace the GEO sample name with the title
 #' @param platform The Annotation Database corresponding to the platform used in the assay (i.e. hgu133plus2.db).
-#' If not supplied, will attempt to detect the correct database. (default: NULL)
+#' If not supplied, will attempt to detect the correct database and retrieve the names from Biomart (which can be SLOW). (default: NULL)
 #' provided in the ExpressionSet's phenoData@data$characteristics.celltype. slot. (default: TRUE)
 #'
 #' @import dplyr
 #' @import AnnotationDbi
 #' @import stringr
+#' @import biomaRt
 #' @importFrom ArrayExpress ArrayExpress
 #' @importFrom Biobase exprs
-#' @importFrom magrittr '%>%'
+#' @importFrom magrittr '%>%' '%<>%'
 #' @importFrom tibble rownames_to_column column_to_rownames
 #' @importFrom plyr mapvalues ddply numcolwise
-#' @importFrom BiocInstaller biocLite
 #' @importFrom oligo rma
 #'
 #' @return A matrix of correlation values
 #' @export
 #'
 #' @examples
-ArrayExpressionPrep <- function(AEaccession,
+ArrayExpressPrep <- function(AEaccession,
                                 var.list = NULL,
                                 rename.samples= TRUE,
                                 platform = NULL){
@@ -230,39 +232,37 @@ ArrayExpressionPrep <- function(AEaccession,
 
   if (is.null(platform)){
     platform <- ae@annotation %>%
-      str_replace(pattern = "pd\\.", replacement = "") %>%
-      str_replace_all(pattern = "\\.", replacement = "") %>%
-      str_c(".db")
+      str_replace(pattern = "pd\\.", replacement = "affy_") %>%
+      str_replace_all(pattern = "\\.", replacement = "_")
+    if (str_detect(string = ae@phenoData@data$characteristics.organism., pattern = "sapiens")){
+      species_dataset = "hsapiens_gene_ensembl"
+    } else if (str_detect(string = ae@phenoData@data$characteristics.organism., pattern = "musculus")){
+      species_dataset = "mmusculus_gene_ensembl"
+    }
+    ensembl <- useMart(biomart = "ENSEMBL_MART_ENSEMBL", dataset = species_dataset)
+    translate <- getBM(attributes = c(platform, "hgnc_symbol"),
+                       filters = platform,
+                       values = exprs.mat$probe_id,
+                       mart = ensembl)
+  } else {
+    translate <- AnnotationDbi::select(get(platform), keys = keys(get(platform), keytype="PROBEID"), columns="SYMBOL", keytype="PROBEID")
   }
 
-  if (!require(platform, character.only = TRUE)){
-    should.install <- readline(prompt = paste0("The package ", platform, " is needed but is not installed.  Would you like to attempt to install it?"))
-    if (should.install){
-      biocLite(platform, suppressUpdates = TRUE, character.only=TRUE)
-      did.load <- require(platform, character.only = TRUE)
-      if (!did.load){
-        stop("Sorry, installation failed.  This analysis cannot proceed.")
-      }
-    } else {
-      stop("The analysis requires that package to translate probeIds to gene names.  It will not work without it.")
-    }
-  }
-  
-  translate <- AnnotationDbi::select(get(platform), keys = keys(get(platform), keytype="PROBEID"), columns="SYMBOL", keytype="PROBEID")
+
   exprs.mat$gene_name <- mapvalues(x = exprs.mat$probe_id,
-                                   from = translate$PROBEID,
-                                   to = toupper(as.character(translate$SYMBOL)))
-  exprs.mat <- exprs.mat %>% filter(!is.na(gene_name))
+                                   from = translate[,1],
+                                   to = toupper(as.character(translate[,2])))
+  exprs.mat %<>% filter(!is.na(gene_name)) %>% filter(!gene_name == "") %>% filter(!gene_name == probe_id)
 
   # Speeds things up and prevents certain errors.  No sense in keeping any data we are not going to use downstream.
   if (!is.null(var.list)){
-    exprs.mat <- exprs.mat %>% filter(gene_name %in% var.list)
+    exprs.mat %<>% filter(gene_name %in% var.list)
   }
 
   exprs.mat <- ddply(.data = exprs.mat, .variables = "gene_name", .fun = numcolwise(sum)) %>% column_to_rownames(var = 'gene_name')
 
   if(isTRUE(rename.samples)){
-    names(ae@phenoData@data) <- names(ae@phenoData@data) %>%
+    names(ae@phenoData@data) %<>%
       tolower() %>%
       str_replace_all(pattern = "cell\\.type", replacement = "celltype")
     colnames(exprs.mat) <- ae@phenoData@data$characteristics.celltype.
