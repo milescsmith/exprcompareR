@@ -388,7 +388,7 @@ SeuratCompareR <- function(first.obj,
         id = group.by
       )
     }
-    seurat.avg <- AverageExpression(
+    second.avg <- AverageExpression(
       object = second.obj,
       add.ident = add.ident,
       use.scale = TRUE
