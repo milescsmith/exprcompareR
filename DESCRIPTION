@@ -1,7 +1,7 @@
 Package: exprcompareR
 Type: Package
 Title: Performs correlation analysis of Seurat data and a Gene Expression Omnibus or ArrayExpress Archive of Functional Genomics Data entry
-Version: 1.5.0
+Version: 1.5.1
 Title: CCA between Seurat scRNA-seq objects and data deposited with the
     Gene Expression Omnibus or ArrayExpress
 Authors@R: person("Miles", "Smith", email = "miles-smith@omrf.org", role = c("aut", "cre"))
