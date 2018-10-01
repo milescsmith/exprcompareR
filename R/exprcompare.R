@@ -121,7 +121,9 @@ CCAcompare <- function(ref.mat,
   expr.ref.dot.product <- t(scaled.ref.mat) %*% scaled.expr.mat
 
   cca.results <- irlba(A = expr.ref.dot.product,
-                       nv = min(dim(expr.ref.dot.product))-1)
+                       nv = min(dim(expr.ref.dot.product))-1,
+                       work = min(dim(expr.ref.dot.product))-1 + 35,
+                       maxit = 50000)
   # note: nv *must* be smaller than either dimension of A
   cca.data <- rbind(cca.results$u, cca.results$v)
   colnames(cca.data) <- paste0("CC",seq(1:(min(dim(expr.ref.dot.product))-1)))

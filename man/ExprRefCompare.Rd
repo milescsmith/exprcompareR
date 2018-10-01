@@ -9,26 +9,33 @@ ExprRefCompare(seuratObj, accession, GEOentry.index = 1,
   add.ident = NULL, cor.function.use = cor, platform = NULL, ...)
 }
 \arguments{
-\item{seuratObj}{Either a processed Seurat object (with ScaleData run) or the output from AverageExpression.
-If a Seurat object is passed, AverageExpression will be run.}
+\item{seuratObj}{Either a processed Seurat object (with ScaleData run) or
+the output from AverageExpression. If a Seurat object is passed,
+AverageExpression will be run.}
 
 \item{accession}{A GEO or ArrayExpress accession number (i.e. 'GSE24759')}
 
-\item{GEOentry.index}{Indicate which ExpressionSet to use in a GEO entry containing multiple ExpressionSets}
+\item{GEOentry.index}{Indicate which ExpressionSet to use in a GEO entry
+containing multiple ExpressionSets}
 
-\item{rename.samples}{Replace the sample name with that provided in the ExpressionSet's phenoData@data slot}
+\item{rename.samples}{Replace the sample name with that provided in the
+ExpressionSet's phenoData@data slot}
 
-\item{do.plot}{Plot the correlation matrix. (default: FALSE)}
+\item{do.plot}{Plot the correlation matrix. Default: FALSE}
 
-\item{group.by}{Identifier or meta.data column by which to group the data. (default: 'ident')}
+\item{group.by}{Identifier or meta.data column by which to group the data.
+Default: 'ident'}
 
-\item{add.ident}{An additional identifier to use as a grouping variable. (default: NULL)}
+\item{add.ident}{An additional identifier to use as a grouping variable.
+Default: NULL}
 
-\item{cor.function.use}{Function to use to calculate correlation. (default: stats::cor)}
+\item{cor.function.use}{Function to use to calculate correlation.
+Default: stats::cor}
 
-\item{platform}{For ArrayExpress datasets, the Annotation Database corresponding to the platform used in the
-assay (i.e. hgu133plus2.db).  If not supplied, will attempt to detect the correct database and retrieve the
-names from Biomart (which can be SLOW)(default: NULL)}
+\item{platform}{For ArrayExpress datasets, the Annotation Database
+corresponding to the platform used in the assay (i.e. hgu133plus2.db).
+If not supplied, will attempt to detect the correct database and retrieve
+the names from Biomart (which can be SLOW) Default: NULL}
 
 \item{...}{Additional parameters to pass to the correlation function.}
 }
