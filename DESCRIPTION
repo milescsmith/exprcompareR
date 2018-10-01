@@ -2,11 +2,16 @@ Package: exprcompareR
 Type: Package
 Title: Performs correlation analysis of Seurat data and a Gene Expression Omnibus or ArrayExpress Archive of Functional Genomics Data entry
 Version: 1.5.0
+Package: seuratBubblePlot
+Type: Package
+Title: CCA between Seurat scRNA-seq objects and data deposited with the
+    Gene Expression Omnibus or ArrayExpress
+Version: 0.1.5
 Authors@R: person("Miles", "Smith", email = "miles-smith@omrf.org", role = c("aut", "cre"))
 Maintainer: Miles Smith <miles-smith@omrf.org>
-Description: Performs a canonical correlation analysis on the average expression of 
-    Seurat clusters and a GEO/AE entry.
-Depends: R (>= 3.5.1),
+Description: Performs a canonical correlation analysis on the average expression 
+    of Seurat clusters and a GEO/AE entry.
+Depends: R (>= 3.5.0),
     GEOquery,
     ArrayExpress,
     AnnotationDbi,
@@ -21,8 +26,9 @@ Depends: R (>= 3.5.1),
     Biobase,
     magrittr,
     stats,
-    biomaRt
+    biomaRt,
+    glue
 License: BSD_3_clause
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0

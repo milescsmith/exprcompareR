@@ -4,23 +4,25 @@
 \alias{GEOprep}
 \title{GEOprep}
 \usage{
-GEOprep(GEOaccession, var.list = NULL, index = 1, rename.samples = TRUE)
+GEOprep(GEOaccession, var.list = NULL, index = 1,
+  rename.samples = TRUE)
 }
 \arguments{
 \item{GEOaccession}{A GEO accession number (i.e. 'GSE24759')}
 
 \item{var.list}{List of variables (i.e. genes) to include.
-If provided, data for other variables is discarded. (default: NULL)}
+If provided, data for other variables is discarded. Default: NULL}
 
 \item{index}{Indicate which ExpressionSet to use in a GEO entry containing
-multiple ExpressionSets. (default: 1)}
+multiple ExpressionSets. Default: 1}
 
 \item{rename.samples}{Replace the GEO sample name with the title
-provided in the ExpressionSet's phenoData@data slot. (default: TRUE)}
+provided in the ExpressionSet's phenoData@data slot. Default: TRUE}
 }
 \value{
 A matrix of correlation values
 }
 \description{
-Processes an entry in the Gene Expression Omnibus database for use in GEOcompare
+Processes an entry in the Gene Expression Omnibus database for use in
+GEOcompare
 }

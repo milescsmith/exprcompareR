@@ -4,16 +4,19 @@
 \alias{CCAcompare}
 \title{CCAcompare}
 \usage{
-CCAcompare(ref.mat, expr.mat, do.plot = FALSE, cor.function.use = cor, ...)
+CCAcompare(ref.mat, expr.mat, do.plot = FALSE, cor.function.use = cor,
+  ...)
 }
 \arguments{
-\item{ref.mat}{A variable x observation (i.e. genes as rows, samples as columns) matrix of reference values}
+\item{ref.mat}{A variable x observation (i.e. genes as rows, samples as
+columns) matrix of reference values}
 
 \item{expr.mat}{A variable x observation matrix of experimental values}
 
-\item{do.plot}{Plot the correlation matrix. (default: FALSE)}
+\item{do.plot}{Plot the correlation matrix. Default: FALSE}
 
-\item{cor.function.use}{Correlation function to be used. (default: stats::cor)}
+\item{cor.function.use}{Correlation function to be used.
+Default: stats::cor}
 
 \item{...}{Additional parameters to pass to the correlation function}
 }
@@ -21,8 +24,9 @@ CCAcompare(ref.mat, expr.mat, do.plot = FALSE, cor.function.use = cor, ...)
 A matrix of correlation values
 }
 \description{
-Compares the an experimental matrix of expression values against a reference matrix of expression values
-to that of an entry in the Gene Expression Omnibus database.
+Compares the an experimental matrix of expression values against a reference
+matrix of expression values to that of an entry in the Gene Expression
+Omnibus database.
 }
 \details{
 Performs a canonical correlation analysis on the two datasets and then
