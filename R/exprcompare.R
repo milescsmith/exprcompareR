@@ -395,7 +395,7 @@ SeuratCompareR <- function(first.obj,
     )
   } else {
     if (is.data.frame(x = second.obj)) {
-      seurat.avg <- second.obj
+      second.avg <- second.obj
     }
   }
 
