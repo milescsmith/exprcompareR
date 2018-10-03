@@ -6,7 +6,8 @@
 \usage{
 ExprRefCompare(seuratObj, accession, GEOentry.index = 1,
   rename.samples = TRUE, do.plot = FALSE, group.by = NULL,
-  add.ident = NULL, cor.function.use = cor, platform = NULL, ...)
+  add.ident = NULL, cor.function.use = cor, platform = NULL,
+  probe_set = NULL, annotation_db = NULL, species = "hsapiens", ...)
 }
 \arguments{
 \item{seuratObj}{Either a processed Seurat object (with ScaleData run) or
@@ -36,6 +37,22 @@ Default: stats::cor}
 corresponding to the platform used in the assay (i.e. hgu133plus2.db).
 If not supplied, will attempt to detect the correct database and retrieve
 the names from Biomart (which can be SLOW) Default: NULL}
+
+\item{probe_set}{If it is difficult/impossible to find the correct annotation
+package for the assay, you can use biomaRt as a backup by supplying the
+probe_set name and species.  For available probesets, run
+biomaRt::listAttributes(mart = useMart(mart = "ENSEMBL_MART_ENSEMBL",
+dataset = "{species}_gene_ensembl")), where {species} is the same as below.
+Default = NULL}
+
+\item{annotation_db}{For entries that do not contain a probeID-to-gene mapping,
+it is necessary to supply the name of the annotation package that
+corresponds to the assay used in the GEO/AE entry (i.e.
+hugene10sttranscriptcluster.db for the [HuGene-1_0-st] Affymetrix Human
+Gene 1.0 ST Array [transcript (gene) version].  Default: NULL.}
+
+\item{species}{= Dataset species, in the form of genus initial, species with
+no space between.  Default: "hsapiens"}
 
 \item{...}{Additional parameters to pass to the correlation function.}
 }

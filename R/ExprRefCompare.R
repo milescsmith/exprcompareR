@@ -22,6 +22,19 @@
 #'   Default: NULL
 #' @param cor.function.use Function to use to calculate correlation.
 #'   Default: stats::cor
+#' @param annotation_db For entries that do not contain a probeID-to-gene mapping,
+#'   it is necessary to supply the name of the annotation package that
+#'   corresponds to the assay used in the GEO/AE entry (i.e.
+#'   hugene10sttranscriptcluster.db for the [HuGene-1_0-st] Affymetrix Human
+#'   Gene 1.0 ST Array [transcript (gene) version].  Default: NULL.
+#' @param probe_set If it is difficult/impossible to find the correct annotation
+#'   package for the assay, you can use biomaRt as a backup by supplying the
+#'   probe_set name and species.  For available probesets, run
+#'   biomaRt::listAttributes(mart = useMart(mart = "ENSEMBL_MART_ENSEMBL",
+#'   dataset = "{species}_gene_ensembl")), where {species} is the same as below.
+#'   Default = NULL
+#' @param species = Dataset species, in the form of genus initial, species with
+#'   no space between.  Default: "hsapiens"
 #' @param platform For ArrayExpress datasets, the Annotation Database
 #'   corresponding to the platform used in the assay (i.e. hgu133plus2.db).
 #'   If not supplied, will attempt to detect the correct database and retrieve
@@ -46,6 +59,9 @@ ExprRefCompare <- function(seuratObj,
                            add.ident = NULL,
                            cor.function.use = cor,
                            platform = NULL,
+                           probe_set = NULL,
+                           annotation_db = NULL,
+                           species = "hsapiens",
                            ...) {
   if (class(x = seuratObj) == "seurat") {
     if (!is.null(x = group.by)) {
@@ -67,6 +83,9 @@ ExprRefCompare <- function(seuratObj,
       GEOaccession = accession,
       var.list = rownames(seurat.avg),
       index = GEOentry.index,
+      probe_set = probe_set,
+      annotation_db = annotation_db,
+      species = species,
       rename.samples = rename.samples
     )
   } else if (str_sub(accession, 1, 1) == "E") {
