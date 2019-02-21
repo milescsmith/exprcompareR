@@ -4,14 +4,11 @@
 \alias{GEOprep}
 \title{GEOprep}
 \usage{
-GEOprep(GEOaccession, var.list = NULL, index = 1, probe_set = NULL,
-  annotation_db = NULL, species = "hsapiens", rename.samples = TRUE)
+GEOprep(GEOaccession, var_list = NULL, index = 1, probe_set = NULL,
+  annotation_db = NULL, species = "hsapiens", rename_samples = TRUE)
 }
 \arguments{
 \item{GEOaccession}{A GEO accession number (i.e. 'GSE24759')}
-
-\item{var.list}{List of variables (i.e. genes) to include.
-If provided, data for other variables is discarded. Default: NULL}
 
 \item{index}{Indicate which ExpressionSet to use in a GEO entry containing
 multiple ExpressionSets. Default: 1}
@@ -32,8 +29,11 @@ Gene 1.0 ST Array [transcript (gene) version].  Default: NULL.}
 \item{species}{= Dataset species, in the form of genus initial, species with
 no space between.  Default: "hsapiens" .}
 
-\item{rename.samples}{Replace the GEO sample name with the title
+\item{rename_samples}{Replace the GEO sample name with the title
 provided in the ExpressionSet's phenoData@data slot. Default: TRUE}
+
+\item{var.list}{List of variables (i.e. genes) to include.
+If provided, data for other variables is discarded. Default: NULL}
 }
 \value{
 A matrix of correlation values

@@ -4,16 +4,16 @@
 \alias{ArrayExpressPrep}
 \title{ArrayExpressnPrep}
 \usage{
-ArrayExpressPrep(AEaccession, var.list = NULL, rename.samples = TRUE,
+ArrayExpressPrep(AEaccession, var_list = NULL, rename_samples = TRUE,
   platform = NULL)
 }
 \arguments{
 \item{AEaccession}{An ArrayExpress accession number (i.e. 'E-MEXP-2360')}
 
-\item{var.list}{List of variables (i.e. genes) to include.
+\item{var_list}{List of variables (i.e. genes) to include.
 If provided, data for other variables is discarded. Default: NULL}
 
-\item{rename.samples}{Replace the GEO sample name with the title}
+\item{rename_samples}{Replace the GEO sample name with the title}
 
 \item{platform}{The Annotation Database corresponding to the platform used
 in the assay (i.e. hgu133plus2.db).

@@ -4,9 +4,9 @@
 #' in GEOcompare
 #'
 #' @param AEaccession An ArrayExpress accession number (i.e. 'E-MEXP-2360')
-#' @param var.list List of variables (i.e. genes) to include.
+#' @param var_list List of variables (i.e. genes) to include.
 #'   If provided, data for other variables is discarded. Default: NULL
-#' @param rename.samples Replace the GEO sample name with the title
+#' @param rename_samples Replace the GEO sample name with the title
 #' @param platform The Annotation Database corresponding to the platform used
 #'   in the assay (i.e. hgu133plus2.db).
 #'   If not supplied, will attempt to detect the correct database and retrieve
@@ -30,15 +30,15 @@
 #'
 #' @examples
 ArrayExpressPrep <- function(AEaccession,
-                             var.list = NULL,
-                             rename.samples = TRUE,
+                             var_list = NULL,
+                             rename_samples = TRUE,
                              platform = NULL) {
   ae <- ArrayExpress(AEaccession)
   names(ae@phenoData@data) <- tolower(names(ae@phenoData@data))
   ae <- oligo::rma(ae)
 
-  exprs.mat <- exprs(ae)
-  exprs.mat <- exprs.mat %>%
+  exprs_mat <- exprs(ae)
+  exprs_mat <- exprs_mat %>%
     as.data.frame() %>%
     rownames_to_column(var = "probe_id")
 
@@ -58,7 +58,7 @@ ArrayExpressPrep <- function(AEaccession,
     translate <- getBM(
       attributes = c(platform, "hgnc_symbol"),
       filters = platform,
-      values = exprs.mat$probe_id,
+      values = exprs_mat$probe_id,
       mart = ensembl
     )
   } else {
@@ -70,35 +70,35 @@ ArrayExpressPrep <- function(AEaccession,
   }
 
 
-  exprs.mat$gene_name <- mapvalues(
-    x = exprs.mat$probe_id,
+  exprs_mat$gene_name <- mapvalues(
+    x = exprs_mat$probe_id,
     from = translate[, 1],
     to = toupper(as.character(translate[, 2]))
   )
-  exprs.mat %<>%
+  exprs_mat %<>%
     filter(!is.na(gene_name)) %>%
     filter(!gene_name == "") %>%
     filter(!gene_name == probe_id)
 
   # Speeds things up and prevents certain errors.  No sense in keeping any
   # data we are not going to use downstream.
-  if (!is.null(var.list)) {
-    exprs.mat %<>% filter(gene_name %in% var.list)
+  if (!is.null(var_list)) {
+    exprs_mat %<>% filter(gene_name %in% var_list)
   }
 
-  exprs.mat <- ddply(.data = exprs.mat,
+  exprs_mat <- ddply(.data = exprs_mat,
                      .variables = "gene_name",
                      .fun = numcolwise(sum)) %>%
     column_to_rownames(var = "gene_name")
 
-  if (isTRUE(rename.samples)) {
+  if (isTRUE(rename_samples)) {
     names(ae@phenoData@data) %<>%
       tolower() %>%
       str_replace_all(pattern = "cell\\.type", replacement = "celltype")
-    colnames(exprs.mat) <- ae@phenoData@data$characteristics.celltype.
+    colnames(exprs_mat) <- ae@phenoData@data$characteristics.celltype.
   }
 
   # TODO need a function that can merge sample replicates.
 
-  return(exprs.mat)
+  return(exprs_mat)
 }

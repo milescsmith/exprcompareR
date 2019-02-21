@@ -18,7 +18,7 @@
 #' @param ... Additional parameters to pass to the correlation function.
 #'
 #' @import stringr
-#' @importFrom Seurat AverageExpression SetAllIdent
+#' @import Seurat
 #' @importFrom heatmaply heatmaply
 #' @importFrom stats cor
 #'
@@ -26,7 +26,11 @@
 #' @export
 #'
 #' @examples
-SeuratCompareR <- function(first.obj,
+SeuratCompareR <- function(first.obj, ...){
+  UseMethod('SeuratCompareR')
+}
+
+SeuratCompareR.seurat <- function(first.obj,
                            second.obj,
                            group.by = NULL,
                            add.ident = NULL,

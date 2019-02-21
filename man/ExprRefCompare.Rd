@@ -2,35 +2,47 @@
 % Please edit documentation in R/ExprRefCompare.R
 \name{ExprRefCompare}
 \alias{ExprRefCompare}
+\alias{ExprRefCompare.seurat}
+\alias{ExprRefCompare.Seurat}
 \title{ExprRefCompare}
 \usage{
-ExprRefCompare(seuratObj, accession, GEOentry.index = 1,
-  rename.samples = TRUE, do.plot = FALSE, group.by = NULL,
-  add.ident = NULL, cor.function.use = cor, platform = NULL,
+ExprRefCompare(object, ...)
+
+\method{ExprRefCompare}{seurat}(seuratObj, accession, GEOentry_index = 1,
+  rename_samples = TRUE, do_plot = FALSE, group_by = NULL,
+  add_ident = NULL, cor_function_use = cor, platform = NULL,
   probe_set = NULL, annotation_db = NULL, species = "hsapiens", ...)
+
+\method{ExprRefCompare}{Seurat}(object, accession, GEOentry_index = 1,
+  rename_samples = TRUE, do_plot = FALSE, group_by = NULL,
+  assay = "RNA", add_ident = NULL, cor_function_use = cor,
+  platform = NULL, probe_set = NULL, annotation_db = NULL,
+  species = "hsapiens", ...)
 }
 \arguments{
-\item{seuratObj}{Either a processed Seurat object (with ScaleData run) or
+\item{object}{Either a processed Seurat object (with ScaleData run) or
 the output from AverageExpression. If a Seurat object is passed,
 AverageExpression will be run.}
 
+\item{...}{Additional parameters to pass to the correlation function.}
+
 \item{accession}{A GEO or ArrayExpress accession number (i.e. 'GSE24759')}
 
-\item{GEOentry.index}{Indicate which ExpressionSet to use in a GEO entry
+\item{GEOentry_index}{Indicate which ExpressionSet to use in a GEO entry
 containing multiple ExpressionSets}
 
-\item{rename.samples}{Replace the sample name with that provided in the
+\item{rename_samples}{Replace the sample name with that provided in the
 ExpressionSet's phenoData@data slot}
 
-\item{do.plot}{Plot the correlation matrix. Default: FALSE}
+\item{do_plot}{Plot the correlation matrix. Default: FALSE}
 
-\item{group.by}{Identifier or meta.data column by which to group the data.
+\item{group_by}{Identifier or meta.data column by which to group the data.
 Default: 'ident'}
 
-\item{add.ident}{An additional identifier to use as a grouping variable.
+\item{add_ident}{An additional identifier to use as a grouping variable.
 Default: NULL}
 
-\item{cor.function.use}{Function to use to calculate correlation.
+\item{cor_function_use}{Function to use to calculate correlation.
 Default: stats::cor}
 
 \item{platform}{For ArrayExpress datasets, the Annotation Database
@@ -53,8 +65,6 @@ Gene 1.0 ST Array [transcript (gene) version].  Default: NULL.}
 
 \item{species}{= Dataset species, in the form of genus initial, species with
 no space between.  Default: "hsapiens"}
-
-\item{...}{Additional parameters to pass to the correlation function.}
 }
 \value{
 A matrix of correlation values

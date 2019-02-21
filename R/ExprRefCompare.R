@@ -7,20 +7,20 @@
 #' Performs a canonical correlation analysis on the two datasets and then
 #' assesses the correlation using the CCA data.
 #'
-#' @param seuratObj Either a processed Seurat object (with ScaleData run) or
+#' @param object Either a processed Seurat object (with ScaleData run) or
 #'   the output from AverageExpression. If a Seurat object is passed,
 #'   AverageExpression will be run.
 #' @param accession A GEO or ArrayExpress accession number (i.e. 'GSE24759')
-#' @param GEOentry.index Indicate which ExpressionSet to use in a GEO entry
+#' @param GEOentry_index Indicate which ExpressionSet to use in a GEO entry
 #'   containing multiple ExpressionSets
-#' @param rename.samples Replace the sample name with that provided in the
+#' @param rename_samples Replace the sample name with that provided in the
 #'   ExpressionSet's phenoData@data slot
-#' @param do.plot Plot the correlation matrix. Default: FALSE
-#' @param group.by Identifier or meta.data column by which to group the data.
+#' @param do_plot Plot the correlation matrix. Default: FALSE
+#' @param group_by Identifier or meta.data column by which to group the data.
 #'   Default: 'ident'
-#' @param add.ident An additional identifier to use as a grouping variable.
+#' @param add_ident An additional identifier to use as a grouping variable.
 #'   Default: NULL
-#' @param cor.function.use Function to use to calculate correlation.
+#' @param cor_function_use Function to use to calculate correlation.
 #'   Default: stats::cor
 #' @param annotation_db For entries that do not contain a probeID-to-gene mapping,
 #'   it is necessary to supply the name of the annotation package that
@@ -42,7 +42,7 @@
 #' @param ... Additional parameters to pass to the correlation function.
 #'
 #' @import stringr
-#' @importFrom Seurat AverageExpression SetAllIdent
+#' @import Seurat
 #' @importFrom heatmaply heatmaply
 #' @importFrom stats cor
 #'
@@ -50,61 +50,134 @@
 #' @export
 #'
 #' @examples
-ExprRefCompare <- function(seuratObj,
+ExprRefCompare <- function(object, ...){
+  UseMethod("ExprRefCompare")
+}
+
+#' @rdname ExprRefCompare
+#' @method ExprRefCompare seurat
+#' @export
+#' @return
+ExprRefCompare.seurat <- function(seuratObj,
                            accession,
-                           GEOentry.index = 1,
-                           rename.samples = TRUE,
-                           do.plot = FALSE,
-                           group.by = NULL,
-                           add.ident = NULL,
-                           cor.function.use = cor,
+                           GEOentry_index = 1,
+                           rename_samples = TRUE,
+                           do_plot = FALSE,
+                           group_by = NULL,
+                           add_ident = NULL,
+                           cor_function_use = cor,
                            platform = NULL,
                            probe_set = NULL,
                            annotation_db = NULL,
                            species = "hsapiens",
                            ...) {
   if (class(x = seuratObj) == "seurat") {
-    if (!is.null(x = group.by)) {
-      seuratObj <- SetAllIdent(seuratObj, group.by)
+    if (!is.null(x = group_by)) {
+      seuratObj <- SetAllIdent(seuratObj, group_by)
     }
-    seurat.avg <- AverageExpression(object = seuratObj,
-                                    add.ident = add.ident,
+    seurat_avg <- AverageExpression(object = seuratObj,
+                                    add.ident = add_ident,
                                     use.scale = TRUE)
   } else {
     if (is.data.frame(seuratObj)) {
-      seurat.avg <- seuratObj
+      seurat_avg <- seuratObj
     }
   }
 
-  rownames(seurat.avg) <- toupper(rownames(seurat.avg))
+  rownames(seurat_avg) <- toupper(rownames(seurat_avg))
 
   if (str_sub(accession, 1, 1) == "G") {
-    ref.mat <- GEOprep(
+    ref_mat <- GEOprep(
       GEOaccession = accession,
-      var.list = rownames(seurat.avg),
-      index = GEOentry.index,
+      var_list = rownames(seurat_avg),
+      index = GEOentry_index,
       probe_set = probe_set,
       annotation_db = annotation_db,
       species = species,
-      rename.samples = rename.samples
+      rename_samples = rename_samples
     )
   } else if (str_sub(accession, 1, 1) == "E") {
-    ref.mat <- ArrayExpressPrep(
+    ref_mat <- ArrayExpressPrep(
       AEaccession = accession,
-      var.list = rownames(seurat.avg),
-      rename.samples = rename.samples,
+      var_list = rownames(seurat_avg),
+      rename_samples = rename_samples,
       platform = platform
     )
   }
 
-  cor.result <- CCAcompare(
-    ref.mat = ref.mat,
-    expr.mat = seurat.avg,
-    cor.function.use = cor.function.use
+  cor_result <- CCAcompare(
+    ref_mat = ref_mat,
+    expr_mat = seurat_avg,
+    cor_function_use = cor_function_use
   )
-  if (do.plot) {
-    return(heatmaply(cor.result))
+  if (do_plot) {
+    return(heatmaply(cor_result))
   } else {
-    return(cor.result)
+    return(cor_result)
+  }
+}
+
+#' @rdname ExprRefCompare
+#' @method ExprRefCompare Seurat
+#'
+#' @export
+#' @return
+ExprRefCompare.Seurat <- function(object,
+                                  accession,
+                                  GEOentry_index = 1,
+                                  rename_samples = TRUE,
+                                  do_plot = FALSE,
+                                  group_by = NULL,
+                                  assay = "RNA",
+                                  add_ident = NULL,
+                                  cor_function_use = cor,
+                                  platform = NULL,
+                                  probe_set = NULL,
+                                  annotation_db = NULL,
+                                  species = "hsapiens",
+                                  ...) {
+  if (class(x = object) == "seurat") {
+    if (!is.null(x = group_by)) {
+      Idents(object) <- object$group_by
+    }
+    seurat_avg <- AverageExpression(object = object,
+                                    assay = assay,
+                                    use.scale = TRUE)
+  } else {
+    if (is.data.frame(object)) {
+      seurat_avg <- object
+    }
+  }
+
+  rownames(seurat_avg) <- toupper(rownames(seurat_avg))
+
+  if (str_sub(accession, 1, 1) == "G") {
+    ref_mat <- GEOprep(
+      GEOaccession = accession,
+      var_list = rownames(seurat_avg),
+      index = GEOentry_index,
+      probe_set = probe_set,
+      annotation_db = annotation_db,
+      species = species,
+      rename_samples = rename_samples
+    )
+  } else if (str_sub(accession, 1, 1) == "E") {
+    ref_mat <- ArrayExpressPrep(
+      AEaccession = accession,
+      var_list = rownames(seurat_avg),
+      rename_samples = rename_samples,
+      platform = platform
+    )
+  }
+
+  cor_result <- CCAcompare(
+    ref_mat = ref_mat,
+    expr_mat = seurat_avg,
+    cor_function_use = cor_function_use
+  )
+  if (do_plot) {
+    return(heatmaply(cor_result))
+  } else {
+    return(cor_result)
   }
 }

@@ -4,13 +4,14 @@
 \alias{SeuratCompareR}
 \title{SeuratCompareR}
 \usage{
-SeuratCompareR(first.obj, second.obj, group.by = NULL,
-  add.ident = NULL, cor.function.use = cor, do.plot = FALSE, ...)
+SeuratCompareR(first.obj, ...)
 }
 \arguments{
 \item{first.obj}{Either a processed Seurat object (with ScaleData run) or
 the output from AverageExpression.  If a Seurat object is passed,
 AverageExpression will be run.}
+
+\item{...}{Additional parameters to pass to the correlation function.}
 
 \item{second.obj}{A second (or the same) processed Seurat object or the
 output from AverageExpression for such an object.}
@@ -25,8 +26,6 @@ Default: NULL}
 Default: stats::cor}
 
 \item{do.plot}{Plot the correlation matrix. Default: FALSE)}
-
-\item{...}{Additional parameters to pass to the correlation function.}
 }
 \value{
 A matrix of correlation values

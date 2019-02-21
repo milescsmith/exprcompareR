@@ -5,19 +5,20 @@
 #' Omnibus database.
 #'
 #' Performs a canonical correlation analysis on the two datasets and then
-#' assesses the correlation using the CCA data.
+#' assesses the correlation using the CC scores.
 #'
-#' @param ref.mat A variable x observation (i.e. genes as rows, samples as
+#' @param ref_mat A variable x observation (i.e. genes as rows, samples as
 #'   columns) matrix of reference values
-#' @param expr.mat A variable x observation matrix of experimental values
-#' @param do.plot Plot the correlation matrix. Default: FALSE
-#' @param cor.function.use Correlation function to be used.
+#' @param expr_mat A variable x observation matrix of experimental values
+#' @param do_plot Plot the correlation matrix. Default: FALSE
+#' @param cor_function_use Correlation function to be used.
 #'   Default: stats::cor
 #' @param ... Additional parameters to pass to the correlation function
 #'
 #' @importFrom tibble rownames_to_column column_to_rownames
 #' @importFrom plyr mapvalues ddply numcolwise
-#' @importFrom irlba irlba
+#' @importFrom rsvd rsvd
+#' @importFrom Matrix tcrossprod
 #' @importFrom stats cor na.omit
 #' @importFrom glue glue
 #'
@@ -25,40 +26,45 @@
 #' @export
 #'
 #' @examples
-CCAcompare <- function(ref.mat,
-                       expr.mat,
-                       do.plot = FALSE,
-                       cor.function.use = cor,
+CCAcompare <- function(ref_mat,
+                       expr_mat,
+                       do_plot = FALSE,
+                       cor_function_use = cor,
                        ...) {
 
   # All subsequent steps rely on an overlapping number of variables, so find
   # the genes in both datasets and then subset the matrices
-  ref.mat <- na.omit(ref.mat)
-  expr.mat <- na.omit(expr.mat)
-  common.variables <- intersect(rownames(ref.mat), rownames(expr.mat))
-  ref.mat <- ref.mat[common.variables, ]
-  expr.mat <- expr.mat[common.variables, ]
+  ref_mat <- na.omit(ref_mat)
+  expr_mat <- na.omit(expr_mat)
+  common_variables <- intersect(rownames(ref_mat), rownames(expr_mat))
+  ref_mat <- ref_mat[common_variables, ]
+  expr_mat <- expr_mat[common_variables, ]
 
   # for CCA:
   # given that ref.mat and expr.mat are gene x sample matrices
-  scaled.ref.mat <- scale(ref.mat)
-  scaled.expr.mat <- scale(expr.mat)
-  expr.ref.dot.product <- t(scaled.ref.mat) %*% scaled.expr.mat
+  scaled_ref_mat <- scale(ref_mat)
+  scaled_expr_mat <- scale(expr_mat)
+  expr_ref_dot_product <- tcrossprod(scaled_ref_mat,scaled_expr_mat)
 
-  cca.results <- irlba(
-    A = expr.ref.dot.product,
-    nv = min(dim(expr.ref.dot.product)) - 1,
-    work = min(dim(expr.ref.dot.product)) - 1 + 35,
-    maxit = 50000
+  cca_results <- rsvd(
+    A = expr_ref_dot_product,
+    k = min(dim(expr_ref_dot_product)) - 1,
   )
+
+  # cca_results <- irlba(
+  #   A = expr_ref_dot_product,
+  #   nv = min(dim(expr_ref_dot_product)) - 1,
+  #   work = min(dim(expr_ref_dot_product)) - 1 + 35,
+  #   maxit = 50000
+  # )
   # note: nv *must* be smaller than either dimension of A
-  cca.data <- rbind(cca.results$u, cca.results$v)
-  colnames(cca.data) <- glue("CC{seq(1:(min(dim(expr.ref.dot.product)) - 1))}")
-  rownames(cca.data) <- c(colnames(ref.mat), colnames(expr.mat))
+  cca_data <- rbind(cca_results$u, cca_results$v)
+  colnames(cca_data) <- glue("CC{seq(1:(min(dim(expr_ref_dot_product)) - 1))}")
+  rownames(cca_data) <- c(colnames(ref_mat), colnames(expr_mat))
 
-  ref.cca <- cca.data[1:dim(ref.mat)[[2]], ]
-  expr.cca <- cca.data[dim(ref.mat)[[2]] + 1:dim(expr.mat)[[2]], ]
-  cor.mat <- cor.function.use(t(ref.cca), t(expr.cca), ...)
+  ref_cca <- cca_data[1:dim(ref_mat)[[2]], ]
+  expr_cca <- cca_data[dim(ref_mat)[[2]] + 1:dim(expr_mat)[[2]], ]
+  cor_mat <- cor_function_use(t(ref_cca), t(expr_cca), ...)
 
-  return(cor.mat)
+  return(cor_mat)
 }

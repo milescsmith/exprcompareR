@@ -4,18 +4,18 @@
 \alias{CCAcompare}
 \title{CCAcompare}
 \usage{
-CCAcompare(ref.mat, expr.mat, do.plot = FALSE, cor.function.use = cor,
+CCAcompare(ref_mat, expr_mat, do_plot = FALSE, cor_function_use = cor,
   ...)
 }
 \arguments{
-\item{ref.mat}{A variable x observation (i.e. genes as rows, samples as
+\item{ref_mat}{A variable x observation (i.e. genes as rows, samples as
 columns) matrix of reference values}
 
-\item{expr.mat}{A variable x observation matrix of experimental values}
+\item{expr_mat}{A variable x observation matrix of experimental values}
 
-\item{do.plot}{Plot the correlation matrix. Default: FALSE}
+\item{do_plot}{Plot the correlation matrix. Default: FALSE}
 
-\item{cor.function.use}{Correlation function to be used.
+\item{cor_function_use}{Correlation function to be used.
 Default: stats::cor}
 
 \item{...}{Additional parameters to pass to the correlation function}
@@ -30,5 +30,5 @@ Omnibus database.
 }
 \details{
 Performs a canonical correlation analysis on the two datasets and then
-assesses the correlation using the CCA data.
+assesses the correlation using the CC scores.
 }

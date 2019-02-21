@@ -21,7 +21,7 @@
 #'   Default = NULL
 #' @param species = Dataset species, in the form of genus initial, species with
 #'   no space between.  Default: "hsapiens" .
-#' @param rename.samples Replace the GEO sample name with the title
+#' @param rename_samples Replace the GEO sample name with the title
 #'   provided in the ExpressionSet's phenoData@data slot. Default: TRUE
 #'
 #' @import biomaRt
@@ -36,32 +36,32 @@
 #'
 #' @examples
 GEOprep <- function(GEOaccession,
-                    var.list = NULL,
+                    var_list = NULL,
                     index = 1,
                     probe_set = NULL,
                     annotation_db = NULL,
                     species = "hsapiens",
-                    rename.samples = TRUE) {
+                    rename_samples = TRUE) {
 
   # access data from a GEO entry
   ref <- getGEO(GEOaccession)
-  exprs.mat <- exprs(ref[[index]])
-  exprs.mat %<>% as.data.frame() %>% rownames_to_column(var = "probe_id")
+  exprs_mat <- exprs(ref[[index]])
+  exprs_mat %<>% as.data.frame() %>% rownames_to_column(var = "probe_id")
 
   if (!is.null(annotation_db)) {
-    exprs.mat$gene_name <- mapIds(
+    exprs_mat$gene_name <- mapIds(
       annotation_db,
-      keys = exprs.mat$probe_id,
+      keys = exprs_mat$probe_id,
       column = "SYMBOL",
       keytype = "PROBEID")
-    exprs.mat <- exprs.mat %>% filter(!is.na(gene_name))
+    exprs_mat <- exprs_mat %>% filter(!is.na(gene_name))
   } else if (!is.null(probe_set)) {
     mart = useMart(biomart = "ENSEMBL_MART_ENSEMBL",
                    dataset = glue("{species}_gene_ensembl"),
                    host = "useast.ensembl.org")
     translation_table = getBM(attributes = c(probe_set, "external_gene_name"),
                               filters = probe_set,
-                              values = exprs.mat$probe_id,
+                              values = exprs_mat$probe_id,
                               mart = mart)
   } else {
     translate <- data.frame(
@@ -71,8 +71,8 @@ GEOprep <- function(GEOaccession,
     # use toupper() as a quick hack that will let us compare human and mouse
     # genes.  Sure, going through homologene or the like would be better, but
     #that takes work.
-    exprs.mat$gene_name <- mapvalues(
-      x = exprs.mat$probe_id,
+    exprs_mat$gene_name <- mapvalues(
+      x = exprs_mat$probe_id,
       from = translate$probe_id,
       to = toupper(as.character(translate$gene_name))
     )
@@ -80,20 +80,20 @@ GEOprep <- function(GEOaccession,
 
   # Speeds things up and prevents certain errors.  No sense in keeping any data
   # we are not going to use downstream.
-  if (!is.null(var.list)) {
-    exprs.mat %<>% filter(gene_name %in% var.list)
+  if (!is.null(var_list)) {
+    exprs_mat %<>% filter(gene_name %in% var_list)
   }
 
-  exprs.mat <- ddply(.data = exprs.mat,
+  exprs_mat <- ddply(.data = exprs_mat,
                      .variables = "gene_name",
                      .fun = numcolwise(sum)) %>%
     column_to_rownames(var = "gene_name")
 
-  if (isTRUE(rename.samples)) {
-    colnames(exprs.mat) <- ref[[index]]@phenoData@data$title
+  if (isTRUE(rename_samples)) {
+    colnames(exprs_mat) <- ref[[index]]@phenoData@data$title
   }
 
   # TODO need a function that can merge sample replicates.
 
-  return(exprs.mat)
+  return(exprs_mat)
 }
