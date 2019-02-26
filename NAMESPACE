@@ -2,6 +2,8 @@
 
 S3method(ExprRefCompare,Seurat)
 S3method(ExprRefCompare,seurat)
+S3method(SeuratCompareR,Seurat)
+S3method(SeuratCompareR,seurat)
 export(ArrayExpressPrep)
 export(CCAcompare)
 export(ExprRefCompare)

@@ -2,9 +2,17 @@
 % Please edit documentation in R/SeuratCompareR.R
 \name{SeuratCompareR}
 \alias{SeuratCompareR}
+\alias{SeuratCompareR.seurat}
+\alias{SeuratCompareR.Seurat}
 \title{SeuratCompareR}
 \usage{
 SeuratCompareR(first.obj, ...)
+
+\method{SeuratCompareR}{seurat}(first.obj, second.obj, group.by = NULL,
+  add.ident = NULL, cor.function.use = cor, do.plot = FALSE, ...)
+
+\method{SeuratCompareR}{Seurat}(first.obj, second.obj, group.by = NULL,
+  add.ident = NULL, cor.function.use = cor, do.plot = FALSE, ...)
 }
 \arguments{
 \item{first.obj}{Either a processed Seurat object (with ScaleData run) or
