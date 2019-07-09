@@ -8,7 +8,8 @@ Authors@R: person("Miles", "Smith", email = "miles-smith@omrf.org",
 Maintainer: Miles Smith <miles-smith@omrf.org>
 Description: Performs a canonical correlation analysis on the average expression 
     of Seurat clusters and a GEO/AE entry.
-Depends: R (>= 3.5.0),
+Depends: R (>= 3.5.0)
+Imports:
     GEOquery,
     ArrayExpress,
     AnnotationDbi,
