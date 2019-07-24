@@ -66,7 +66,7 @@ GEOprep <- function(GEOaccession,
   } else {
     translate <- data.frame(
       "probe_id" = ref[[index]]@featureData@data$ID,
-      "gene_name" = ref[[index]]@featureData@data$`Gene Symbol`
+      "gene_name" = ref[[index]]@featureData@data[[grep(pattern="[Ss]ymbol", x = names(ref[[2]]@featureData@data), value = TRUE)]]
     )
     # use toupper() as a quick hack that will let us compare human and mouse
     # genes.  Sure, going through homologene or the like would be better, but
